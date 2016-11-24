@@ -143,7 +143,7 @@ function message_get_danmu_last($conn, $n) {
 function message_get_danmu_recent($conn, $seconds) {
 	$max_count = 256;
 	list($ret_code, $result) = mysql_execute_prepare($conn,
-		"SELECT danmu.message_id, danmu.text, danmu.create_time FROM danmu WHERE NOW() - danmu.create_time >= 0 AND NOW() - danmu.create_time < ? " .
+		"SELECT danmu.message_id, danmu.text, danmu.create_time FROM danmu WHERE NOW() - danmu.create_time >= 0 AND TIME_TO_SEC(TIMEDIFF(NOW(), danmu.create_time)) < ? " .
 		"ORDER BY danmu.message_id DESC LIMIT 256",
 		"i", array($seconds), true);
     if ($ret_code < 0)
