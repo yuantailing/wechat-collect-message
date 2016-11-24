@@ -1,7 +1,60 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Language" content="en-us" charset="utf-8">
+		<title>Danmaku Server</title>
 	</head>
 	<body>
+		<p><img src="img/qrcode_for_gh_cf1943c1cebf_344.jpg" height="128"/></p>
+		<h2>接口演示</h2>
+		<ol>
+			<p>URL: <a href="message.php">message.php</a></p>
+			<table border="1">
+				<thead>
+					<tr>
+						<th>作用</th>
+						<th>action</th>
+						<th>parameters</th>
+						<th>返回值</th>
+						<th>示例</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>查询最新的 n 条弹幕</td>
+						<td>get_danmu_last</td>
+						<td>整数 n </td>
+						<td rowspan="3">
+							<p>application/json; charset=UTF-8</p>
+							<ul>
+								<li>如果error=0，那么danmu_set是一个数组，每个元素含message_id、text、create_time</li>
+								<li>如果error=0，且danmu_set数量达到限制，那么返回结果含hint</li>
+								<li>如果error!=0，那么返回结果含errorMessage</li>
+							</ul>
+						</td>
+						<td><a href="message.php?action=get_danmu_last&amp;n=5">message.php?action=get_danmu_last&amp;n=5</a></td>
+					</tr>
+					<tr>
+						<td>查询最近 seconds 秒的弹幕</td>
+						<td>get_danmu_recent</td>
+						<td>整数 seconds </td>
+						<td><a href="message.php?action=get_danmu_recent&amp;seconds=3600">message.php?action=get_danmu_recent&amp;seconds=3600</a></td>
+					</tr>
+					<tr>
+						<td>查询 message_id 大于某个值的弹幕</td>
+						<td>get_danmu_message_id__gt</td>
+						<td>整数 message_id </td>
+						<td><a href="message.php?action=get_danmu_message_id__gt&amp;message_id=1">message.php?action=get_danmu_message_id__gt&amp;message_id=123</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</ol>
+		<h2>技术细节</h2>
+		<ol>
+			<li>发到微信公众号“THU数据结构MOOC”的文本消息中，匹配正则表达式 <pre style="display:inline;">/^[Dd][Mm]([\s\S]*\S[\s\S]*)/i</pre> 的会被认为是弹幕，text被定义为matches的第1组</li>
+			<li>弹幕是按message_id降序排列的，而且最多显示 N (N=256) 条，如果达到最大值，返回的json会有一个键"hint"描述这个警告</li>
+			<li>create_time是服务器收到弹幕的时间，而不是用户发送弹幕的时间</li>
+			<li>message_id小的弹幕的create_time不一定小</li>
+			<li>message_id小的弹幕不一定先被创建。例如查询最近的3条消息的message_id是[6, 4, 3]，有可能下次查询结果是[6, 5, 4]。</li>
+		</ol>
 	</body>
 </html>

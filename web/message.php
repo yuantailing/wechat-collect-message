@@ -5,7 +5,7 @@ require_once("includes/database.php");
 require_once("message.function.php");
 
 session_start();
-header('Content-type: text/json; charset=UTF-8');
+header('Content-Type: application/json; charset=UTF-8');
 
 if (($ret = check_input_param("action", $_GET)) !== true) {
 	print json_encode($ret);
