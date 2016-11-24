@@ -113,7 +113,7 @@ function message_insert_text_message($conn, $to_user_name, $from_user_name, $cre
 
 function message_insert_danmu($conn, $message_id, $text) {
 	list($ret_code, ) = mysql_execute_prepare($conn,
-		"INSERT INTO danmu (message_id, text, create_time) VALUES (?, ?, NOW())",
+		"INSERT INTO danmu (message_id, text) VALUES (?, ?)",
 		"is", array($message_id, $text), false);
     if ($ret_code < 0)
         return array("error" => -1025, "errorMessage" => "Impossible to execute query.");
@@ -143,7 +143,7 @@ function message_get_danmu_last($conn, $n) {
 function message_get_danmu_recent($conn, $seconds) {
 	$max_count = 256;
 	list($ret_code, $result) = mysql_execute_prepare($conn,
-		"SELECT danmu.message_id, danmu.text, danmu.create_time FROM danmu WHERE NOW() - danmu.create_time >= 0 AND TIME_TO_SEC(TIMEDIFF(NOW(), danmu.create_time)) < ? " .
+		"SELECT danmu.message_id, danmu.text, danmu.create_time FROM danmu WHERE NOW() - danmu.create_time >= 0 AND TIME_TO_SEC(TIMEDIFF(NOW(), danmu.create_time)) <= ? " .
 		"ORDER BY danmu.message_id DESC LIMIT 256",
 		"i", array($seconds), true);
     if ($ret_code < 0)
