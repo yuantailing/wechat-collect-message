@@ -9,7 +9,7 @@ function check_input_param($keys, $arr = null)
 		$local_keys = $keys;
 	foreach ($local_keys as $key) {
 		if (!array_key_exists($key, $arr))
-			return array("error" => -1, "errorMessage" => "paramter missed: " . $key);
+			return array("error" => -1, "errorMessage" => "parameter missing: `" . $key . "`");
 	}
 	return true;
 }
