@@ -30,6 +30,7 @@ public slots:
 
 protected:
     void paintEvent(QPaintEvent *);
+    void closeEvent(QCloseEvent *);
 
 private:
     MainWindow *parent;

@@ -4,6 +4,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QColorDialog>
 #include <QSettings>
 #include <QDebug>
 #include <algorithm>
@@ -16,9 +17,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->pushButtonColor->setStyleSheet(QString("background-color: rgb(0,0,255);"));
+
     configFilename = "config.ini";
-    configLoading = false;
-    configDirty = false;
+    configLoading = configDirty = false;
     danmu = new Danmu(this);
 
     nam = new QNetworkAccessManager(this);
@@ -46,7 +48,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::pullDanmu() {
-    int maxsec = 7200;
+    int maxsec = ui->spinBoxTime->value();
     QUrl url(QString("http://dsa.cs.tsinghua.edu.cn/danmaku/message.php?action=get_danmu_recent&seconds=%1").arg(maxsec));
     nam->get(QNetworkRequest(url));
 }
@@ -91,6 +93,29 @@ void MainWindow::on_checkBoxVisible_stateChanged(int arg1)
     danmu->setVisible(arg1 != 0);
 }
 
+void MainWindow::on_comboBoxAlign_currentIndexChanged(int)
+{
+    configDirty = true;
+    danmu->update();
+}
+
+void MainWindow::on_fontComboBoxFont_currentIndexChanged(int)
+{
+    configDirty = true;
+    danmu->update();
+}
+
+void MainWindow::on_pushButtonColor_clicked()
+{
+    QPalette palette = ui->pushButtonColor->palette();
+    QColor color = QColorDialog::getColor(palette.button().color(), this);
+    if (color.isValid()) {
+        ui->pushButtonColor->setStyleSheet(QString("background-color: %1").arg(color.name()));
+        configDirty = true;
+        danmu->update();
+    }
+}
+
 void MainWindow::on_lineEditTitle_textChanged(const QString &)
 {
     configDirty = true;
@@ -98,6 +123,13 @@ void MainWindow::on_lineEditTitle_textChanged(const QString &)
 }
 
 void MainWindow::on_lineEditFilter_textChanged(const QString &)
+{
+    configDirty = true;
+    danmu->update();
+}
+
+
+void MainWindow::on_spinBoxTime_valueChanged(int)
 {
     configDirty = true;
     danmu->update();
@@ -149,8 +181,12 @@ void MainWindow::saveConfig() {
     if (configLoading || !configDirty)
         return;
     QSettings writer(configFilename, QSettings::IniFormat);
+    writer.setValue("danmu/align", ui->comboBoxAlign->currentIndex());
+    writer.setValue("danmu/font", ui->fontComboBoxFont->currentFont().family());
+    writer.setValue("danmu/color", ui->pushButtonColor->palette().button().color().name());
     writer.setValue("danmu/title", ui->lineEditTitle->text());
     writer.setValue("danmu/filter", ui->lineEditFilter->text());
+    writer.setValue("danmu/time", ui->spinBoxTime->value());
     writer.setValue("danmu/left", ui->horizontalSliderLeft->value());
     writer.setValue("danmu/up", ui->horizontalSliderUp->value());
     writer.setValue("danmu/width", ui->horizontalSliderWidth->value());
@@ -158,15 +194,24 @@ void MainWindow::saveConfig() {
     writer.setValue("danmu/fontsize", ui->horizontalSliderFontsize->value());
     writer.setValue("danmu/opacity", ui->horizontalSliderOpacity->value());
     writer.setValue("danmu/background", ui->horizontalSliderBackground->value());
+    configDirty = false;
 }
 
 void MainWindow::loadConfig() {
     configLoading = true;
     QSettings reader(configFilename, QSettings::IniFormat);
+    if (reader.contains("danmu/align"))
+        ui->comboBoxAlign->setCurrentIndex(reader.value("danmu/align").toInt());
+    if (reader.contains("danmu/font"))
+        ui->fontComboBoxFont->setCurrentFont(QFont(reader.value("danmu/font").toString()));
+    if (reader.contains("danmu/color"))
+        ui->pushButtonColor->setStyleSheet(QString("background-color: %1").arg(reader.value("danmu/color").toString()));
     if (reader.contains("danmu/title"))
         ui->lineEditTitle->setText(reader.value("danmu/title").toString());
     if (reader.contains("danmu/filter"))
         ui->lineEditFilter->setText(reader.value("danmu/filter").toString());
+    if (reader.contains("danmu/time"))
+        ui->spinBoxTime->setValue(reader.value("danmu/time").toInt());
     if (reader.contains("danmu/left"))
         ui->horizontalSliderLeft->setValue(reader.value("danmu/left").toInt());
     if (reader.contains("danmu/up"))

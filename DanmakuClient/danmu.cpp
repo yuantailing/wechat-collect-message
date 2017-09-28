@@ -1,5 +1,6 @@
 #include <QDesktopWidget>
 #include <QFont>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QDebug>
 #include "danmu.h"
@@ -10,11 +11,10 @@
 Danmu::Danmu(MainWindow *parent) : QWidget(nullptr), parent(parent)
 {
     setGeometry(0, 0, 640, 400);
-
-    setWindowFlags(Qt::FramelessWindowHint|Qt::Tool|Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
+    setAttribute(Qt::WA_TransparentForMouseEvents, true);
     setFocusPolicy(Qt::NoFocus);
-    setWindowOpacity(1.0);
     show();
 }
 
@@ -42,27 +42,34 @@ void Danmu::paintEvent(QPaintEvent *) {
     painter.restore();
 
     int fontsize = parent->ui->horizontalSliderFontsize->value();
-    QFont fontName("黑体", fontsize, 100, false);
+    QString fontfamily = parent->ui->fontComboBoxFont->currentFont().family();
+    QColor textColor = parent->ui->pushButtonColor->palette().button().color();
+
+    QFont fontName(fontfamily, fontsize, 100, false);
     QFontMetrics metricsName(fontName);
-    QFont fontText("黑体", fontsize, 0, false);
+    QFont fontText(fontfamily, fontsize, 0, false);
     QFontMetrics metricsText(fontText);
 
     int y_top = 0;
     int y_gap = 4;
+    bool alignRight = 1 == parent->ui->comboBoxAlign->currentIndex();
     QString title = parent->ui->lineEditTitle->text();
     if (!title.isEmpty()) {
         int fz = fontsize;
         while (1) {
-            QFont fontTitle("黑体", fz, 100, false);
+            QFont fontTitle(fontfamily, fz, 100, false);
             QFontMetrics metricsTitle(fontTitle);
             QSize szTitle(metricsTitle.size(Qt::TextSingleLine, title));
             if (fz > 12 && szTitle.width() > width()) {
                 fz--;
                 continue;
             }
-            painter.setPen(Qt::black);
+            painter.setPen(textColor);
             painter.setFont(fontTitle);
-            painter.drawText(QRect(0, y_top, width() - 1, szTitle.height() - 1), title);
+            if (alignRight)
+                painter.drawText(QRect(width() - qMin(szTitle.width(), width()), y_top, szTitle.width(), szTitle.height()), title);
+            else
+                painter.drawText(QRect(0, y_top, szTitle.width(), szTitle.height()), title);
             y_top += szTitle.height() + y_gap;
             break;
         }
@@ -74,7 +81,7 @@ void Danmu::paintEvent(QPaintEvent *) {
         if (mid.length() < filter.length())
             continue;
         for (int i = 0; i < filter.size(); i++) {
-            if (filter[i] == '?' || filter.mid(i, 1) == "？")
+            if (filter[i] == '.')
                 mid[i] = filter[i];
         }
         if (mid.toLower() != filter.toLower())
@@ -83,22 +90,36 @@ void Danmu::paintEvent(QPaintEvent *) {
         if (filteredText.isEmpty())
             continue;
 
-        QString textUser = msg.user.mid(14, 4) + ": ";
+        QString textUser = msg.user.mid(14, 4);
+        if (alignRight)
+            textUser = " " + textUser;
+        else
+            textUser = textUser + ": ";
         int seed = msg.user.mid(0, 7).toInt(nullptr, 16);
         QSize sz(metricsName.size(Qt::TextSingleLine, textUser));
         int lineHeight = sz.height();
         painter.setPen(QColor::fromHsv(seed % 360, seed / 360 % 64 + 192, seed / 360 / 64 % 64 + 192));
         painter.setFont(fontName);
-        painter.drawText(QRect(0, y_top, sz.width() - 1, sz.height() - 1), textUser);
+        if (alignRight)
+            painter.drawText(QRect(width() - sz.width(), y_top, sz.width(), sz.height()), textUser);
+        else
+            painter.drawText(QRect(0, y_top, sz.width(), sz.height()), textUser);
         QString textText = metricsText.elidedText(filteredText, Qt::ElideRight, width() - sz.width(), Qt::TextSingleLine);
         QSize szText(metricsText.size(Qt::TextSingleLine, textText));
         lineHeight = qMax(lineHeight, szText.height());
-        painter.setPen(Qt::black);
+        painter.setPen(textColor);
         painter.setFont(fontText);
-        painter.drawText(QRect(sz.width(), y_top, width() - sz.width(), szText.height() - 1), textText);
+        if (alignRight)
+            painter.drawText(QRect(width() - sz.width() - szText.width(), y_top, szText.width(), szText.height()), textText);
+        else
+            painter.drawText(QRect(sz.width(), y_top, width() - sz.width(), szText.height()), textText);
         y_top += lineHeight + y_gap;
         if (y_top > height())
             break;
     }
     painter.end();
+}
+
+void Danmu::closeEvent(QCloseEvent *) {
+    parent->ui->checkBoxVisible->setCheckState(Qt::Unchecked);
 }

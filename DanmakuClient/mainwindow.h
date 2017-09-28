@@ -27,8 +27,12 @@ private slots:
     void getDanmuFinishedSlot(QNetworkReply *);
 
     void on_checkBoxVisible_stateChanged(int arg1);
+    void on_comboBoxAlign_currentIndexChanged(int index);
+    void on_fontComboBoxFont_currentIndexChanged(int index);
+    void on_pushButtonColor_clicked();
     void on_lineEditTitle_textChanged(const QString &arg1);
     void on_lineEditFilter_textChanged(const QString &arg1);
+    void on_spinBoxTime_valueChanged(int arg1);
     void on_horizontalSliderLeft_valueChanged(int value);
     void on_horizontalSliderUp_valueChanged(int value);
     void on_horizontalSliderWidth_valueChanged(int value);
