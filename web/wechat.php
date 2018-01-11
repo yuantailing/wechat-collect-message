@@ -38,7 +38,7 @@ class WechatCallbackApi
 			return;
 
 		//get post data, May be due to the different environments
-		$postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
+		$postStr = file_get_contents("php://input");
 		$token = TOKEN;
 		$encodingAesKey = ENCODING_AES_KEY;
 		$appId = APP_ID;
